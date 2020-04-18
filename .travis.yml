@@ -1,0 +1,25 @@
+sudo: required
+services:
+  - docker
+
+#build image for test
+before_install:
+  - docker build -t dockbis/react-test -f ./client/Dockerfile.dev ./client
+#run test
+script:
+  - docker run -e CI=true dockbis/react-test npm test
+#after test, build production images
+after_success:
+  - docker build -t dockbis/multi-client ./client
+  - docker build -t dockbis/multi-nginx ./nginx
+  - docker build -t dockbis/multi-server ./server
+  - docker build -t dockbis/multi-worker ./worker
+#log in to docker CLI to push images to docker hub
+#log in first
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+#push images
+  - docker push dockbis/multi-client
+  - docker push dockbis/multi-nginx
+  - docker push dockbis/multi-server
+  - docker push dockbis/multi-worker
+  
